@@ -161,13 +161,13 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         '08S02',
     )
     _sql_server_versions = {
-        9: 2005,
-        10: 2008,
-        11: 2012,
-        12: 2014,
-        13: 2016,
-        14: 2017,
-        15: 2019,
+        90: 2005,
+        100: 2008,
+        110: 2012,
+        120: 2014,
+        130: 2016,
+        140: 2017,
+        150: 2019,
     }
 
     # https://azure.microsoft.com/en-us/documentation/articles/sql-database-develop-csharp-retry-windows/
@@ -412,9 +412,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         """
         if self.alias not in _known_versions:
             with self.temporary_connection() as cursor:
-                cursor.execute("SELECT CAST(SERVERPROPERTY('ProductVersion') AS varchar)")
-                ver = cursor.fetchone()[0]
-                ver = int(ver.split('.')[0])
+                cursor.execute("SELECT compatibility_level FROM sys.databases WHERE name = '%s'" % self.settings_dict['NAME'])
+                ver = int(cursor.fetchone()[0])
                 if ver not in self._sql_server_versions:
                     raise NotSupportedError('SQL Server v%d is not supported.' % ver)
                 _known_versions[self.alias] = self._sql_server_versions[ver]
